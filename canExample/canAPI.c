@@ -45,10 +45,9 @@ int TransmitCanFrame(const int sock, const uint32_t id, const uint8_t* data, con
 {
 	// Set CAN frame to send
 	struct can_frame frame;
-	frame.can_id = id & 0x1fffffff;
-	frame.can_id |= (1 << 31);
-	memcpy(frame.data, data, data_len);
+	frame.can_id = id;
 	frame.can_dlc = data_len;
+	memcpy(frame.data, data, data_len);
 
 	// Send
 	int tx_bytes = write(sock, &frame, sizeof(frame));
@@ -66,6 +65,7 @@ int ReceiveCanFrame(const int sock)
 {
 	struct can_frame frame;
 
+	printf("\n");
 	int rx_bytes = read(sock, &frame, sizeof(frame));
 	if (rx_bytes < 0)
 	{
@@ -83,31 +83,12 @@ int ReceiveCanFrame(const int sock)
 		return -1;
 	}
 
-	// Process data case by Frame
-	if (((frame.can_id >> 29) & 1) == 1)
+	printf("0x%03X [%d] ", frame.can_id, frame.can_dlc);
+	for (int i = 0; i < frame.can_dlc; i++)
 	{
-		printf("Error frame is received\n");
+		printf("%02X ", frame.data[i]);
 	}
-	else if (((frame.can_id >> 30) & 1) == 1)
-	{
-		printf("RTR frame is received\n");
-	}
-	else
-	{
-		if (((frame.can_id >> 31) & 1) == 1)
-		{
-			printf("11bit long std can frame is received\n");
-		}
-		else
-		{
-			printf("29bit long ext can frame is received\n");
-		}
-
-		// Process frame
-		printf("TODO: Process frame...\n");
-	}
-
-	printf("## End of Receiving ##\n");
+	printf("\n");
 
 	return 0;
 }
